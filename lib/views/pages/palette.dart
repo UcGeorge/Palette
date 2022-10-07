@@ -2,24 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../logic/classes/palette.dart';
-import '../../logic/cubit/generator_cubit.dart';
 import '../../logic/cubit/settings_cubit.dart';
-import '../../logic/services/alert_dialogue.dart';
-import '../../logic/services/library.dart';
+import '../../logic/services/menu.dart';
 import '../../logic/util/general.dart';
 import '../../settings/theme.dart';
-import '../modals/export_menu.dart';
-import '../widgets/bottom_bar_spacer.dart';
-import '../widgets/menu/manu_tile.dart';
+import '../context_menu/palette_menu.dart';
 import '../widgets/more_horiz.dart';
 import '../widgets/palette_page/text.dart';
 
 class PaletteView extends StatefulWidget {
   const PaletteView({super.key, required this.palette, this.onPop, this.name});
 
-  final Palette palette;
   final String? name;
   final VoidCallback? onPop;
+  final Palette palette;
 
   @override
   State<PaletteView> createState() => _PaletteViewState();
@@ -27,19 +23,6 @@ class PaletteView extends StatefulWidget {
 
 class _PaletteViewState extends State<PaletteView> {
   int index = 0;
-
-  void showMenu(SettingsState settingsState) async {
-    await showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-      builder: (modalContext) => _buildMenu(settingsState),
-    );
-  }
 
   AppBar _buildAppBar(SettingsState settingsState) {
     return AppBar(
@@ -69,7 +52,16 @@ class _PaletteViewState extends State<PaletteView> {
       actions: [
         MoreHoriz(
           settingsState: settingsState,
-          onTap: () => showMenu(settingsState),
+          onTap: () => MenuService.showMenu(
+            context,
+            menuWidget: PaletteMenu(
+              palette: widget.palette,
+              name: widget.name,
+              onPop: widget.onPop,
+              settingsState: settingsState,
+              appContext: context,
+            ),
+          ),
         ),
         const SizedBox(width: 8),
       ],
@@ -116,90 +108,6 @@ class _PaletteViewState extends State<PaletteView> {
         ),
         // const BorromBarSpacer(),
       ],
-    );
-  }
-
-  Builder _buildMenu(SettingsState settingsState) {
-    return Builder(
-      builder: (menuContext) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 4),
-            MenuTile(
-              settingsState: settingsState,
-              icon: Icons.auto_fix_high_outlined,
-              onTap: () {
-                context.read<GeneratorCubit>().loadPalette(widget.palette);
-                Navigator.of(menuContext).pop();
-                Navigator.of(context).pop();
-                widget.onPop?.call();
-              },
-              title: 'Open in the generator',
-            ),
-            const Divider(height: 8),
-            if (widget.name == null)
-              MenuTile(
-                settingsState: settingsState,
-                icon: Icons.favorite_border,
-                onTap: () {
-                  Navigator.of(menuContext).pop();
-                  LibraryService.addPalette(
-                    context,
-                    onSuccess: () => AlertService.showAppDialogue(
-                      context,
-                      text: 'Palette saved!',
-                    ),
-                  );
-                },
-                title: 'Save palette',
-              ),
-            if (widget.name == null) const Divider(height: 8),
-            MenuTile(
-              hasSubMenu: true,
-              settingsState: settingsState,
-              icon: Icons.share_outlined,
-              onTap: () {
-                Navigator.pop(menuContext);
-                showModalBottomSheet(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                    ),
-                  ),
-                  builder: (modalContext) => exportMenu(
-                    context,
-                    settingsState: settingsState,
-                    palette: widget.palette,
-                  ),
-                );
-              },
-              title: 'Export palette',
-            ),
-            const Divider(height: 8),
-            GestureDetector(
-              onTap: Navigator.of(menuContext).pop,
-              child: Container(
-                color: Colors.transparent,
-                padding: const EdgeInsets.all(16.0),
-                child: Center(
-                  child: Text(
-                    'Cancel',
-                    style: AppTextTheme.nunito.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const BorromBarSpacer(),
-          ],
-        );
-      },
     );
   }
 
