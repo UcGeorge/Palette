@@ -12,11 +12,12 @@ class MenuTile extends StatelessWidget {
     required this.onTap,
     this.hasSubMenu = false,
   }) : super(key: key);
-  final SettingsState settingsState;
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
+
   final bool hasSubMenu;
+  final IconData icon;
+  final VoidCallback onTap;
+  final SettingsState settingsState;
+  final String title;
 
   @override
   Widget build(BuildContext context) {

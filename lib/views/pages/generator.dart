@@ -6,20 +6,16 @@ import '../../logic/classes/palette.dart';
 import '../../logic/classes/stack.dart';
 import '../../logic/cubit/generator_cubit.dart';
 import '../../logic/cubit/settings_cubit.dart';
-import '../../logic/services/alert_dialogue.dart';
-import '../../logic/services/library.dart';
+import '../../logic/services/menu.dart';
 import '../../logic/util/general.dart';
 import '../../logic/util/navigation.dart';
 import '../../settings/theme.dart';
-import '../modals/export_menu.dart';
-import '../widgets/bottom_bar_spacer.dart';
+import '../context_menu/generator_menu.dart';
 import '../widgets/generator_page/color_tile.dart';
 import '../widgets/generator_page/undo_redo.dart';
-import '../widgets/menu/manu_tile.dart';
 import '../widgets/menu_vert.dart';
 import '../widgets/more_horiz.dart';
 import 'library.dart';
-import 'palette.dart';
 
 final _log = Logger('generator_page');
 
@@ -59,113 +55,6 @@ class _GeneratorPageState extends State<GeneratorPage> {
     context
         .read<GeneratorCubit>()
         .generatePalette(settingsState.generateMethod);
-  }
-
-  void showMenu(SettingsState settingsState) async {
-    await showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-        ),
-      ),
-      builder: (modalContext) => _buildMenu(settingsState),
-    );
-  }
-
-  Builder _buildMenu(SettingsState settingsState) {
-    return Builder(
-      builder: (menuContext) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 4),
-            MenuTile(
-              settingsState: settingsState,
-              icon: Icons.remove_red_eye_outlined,
-              onTap: () {
-                Navigator.of(menuContext).pop();
-                cupertinoPageNav(
-                  context,
-                  child: PaletteView(
-                    palette: context.read<GeneratorCubit>().state.palette,
-                  ),
-                );
-              },
-              title: 'View palette',
-            ),
-            const Divider(height: 8),
-            MenuTile(
-              settingsState: settingsState,
-              icon: Icons.favorite_border,
-              onTap: () {
-                Navigator.of(menuContext).pop();
-                LibraryService.addPalette(
-                  context,
-                  onSuccess: () => AlertService.showAppDialogue(
-                    context,
-                    text: 'Palette saved!',
-                  ),
-                );
-              },
-              title: 'Save palette',
-            ),
-            const Divider(height: 8),
-            MenuTile(
-              hasSubMenu: true,
-              settingsState: settingsState,
-              icon: Icons.share_outlined,
-              onTap: () {
-                Navigator.pop(menuContext);
-                showModalBottomSheet(
-                  context: context,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(16),
-                      topRight: Radius.circular(16),
-                    ),
-                  ),
-                  builder: (modalContext) => exportMenu(
-                    context,
-                    settingsState: settingsState,
-                    palette: context.read<GeneratorCubit>().state.palette,
-                  ),
-                );
-              },
-              title: 'Export palette',
-            ),
-            const Divider(height: 8),
-            //TODO: Implement settings
-            // MenuTile(
-            //   settingsState: settingsState,
-            //   icon: Icons.settings_outlined,
-            //   onTap: doNothing,
-            //   title: 'Settings',
-            // ),
-            // const Divider(height: 8),
-            GestureDetector(
-              onTap: Navigator.of(menuContext).pop,
-              child: Container(
-                color: Colors.transparent,
-                padding: const EdgeInsets.all(16.0),
-                child: Center(
-                  child: Text(
-                    'Cancel',
-                    style: AppTextTheme.nunito.copyWith(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const BorromBarSpacer(),
-          ],
-        );
-      },
-    );
   }
 
   Container _buildGeneratorBottomBar(
@@ -226,7 +115,13 @@ class _GeneratorPageState extends State<GeneratorPage> {
               children: [
                 MoreHoriz(
                   settingsState: settingsState,
-                  onTap: () => showMenu(settingsState),
+                  onTap: () => MenuService.showMenu(
+                    context,
+                    menuWidget: GeneratorMenu(
+                      appContext: context,
+                      settingsState: settingsState,
+                    ),
+                  ),
                 ),
                 MenuVert(
                   settingsState: settingsState,
